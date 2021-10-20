@@ -6,13 +6,12 @@ import numpy as np
 import cv2
 import math
 
-
 from utils import *
 
 
 class KittiDataset(torch.utils.data.Dataset):
 
-    def __init__(self, root, set='train',type='velodyne_train'):
+    def __init__(self, root, set='train', type='velodyne_train'):
         self.type = type
         self.root = root
         self.data_path = os.path.join(root, 'training')
@@ -24,7 +23,7 @@ class KittiDataset(torch.utils.data.Dataset):
         train_file = os.path.join(self.root, '%s.txt' % set)
 
         # make the train.txt, if not already there
-        if not(os.path.isfile(train_file)):
+        if not (os.path.isfile(train_file)):
             file = open(train_file, "w")
             for i in range(6000):
                 file_i = str(i).zfill(6)
@@ -40,26 +39,25 @@ class KittiDataset(torch.utils.data.Dataset):
         calib_file = self.calib_path + '/' + self.file_list[i] + '.txt'
         label_file = self.label_path + '/' + self.file_list[i] + '.txt'
         image_file = self.image_path + '/' + self.file_list[i] + '.png'
-        #print(self.file_list[i])
+        # print(self.file_list[i])
 
         if self.type == 'velodyne_train':
 
             calib = load_kitti_calib(calib_file)
 
-            
-            target = get_target(label_file,calib['Tr_velo2cam'])
-            #print(target)
-            #print(self.file_list[i])
-            
+            target = get_target(label_file, calib['Tr_velo2cam'])
+            # print(target)
+            # print(self.file_list[i])
+
             ################################
             # load point cloud data
             a = np.fromfile(lidar_file, dtype=np.float32).reshape(-1, 4)
 
-            b = removePoints(a,bc)
+            b = removePoints(a, bc)
 
-            data = makeBVFeature(b, bc ,40/512)   # (512, 1024, 3)
+            data = makeBVFeature(b, bc, 40 / 512)  # (512, 1024, 3)
 
-            return data , target
+            return data, target
 
         elif self.type == 'velodyne_test':
             NotImplemented
@@ -69,5 +67,3 @@ class KittiDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.file_list)
-
-

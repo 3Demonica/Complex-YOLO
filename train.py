@@ -9,7 +9,6 @@ from complexYOLO import ComplexYOLO
 from kitti import KittiDataset
 from region_loss import RegionLoss
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='training complex yolo.')
     parser.add_argument('--dir', default='/home/m_vogel/KITTI', help='directory of KITTI')
@@ -23,7 +22,7 @@ if __name__ == '__main__':
     number_epochs = args.epochs
 
     # dataset
-    dataset=KittiDataset(root=dir, set='train')
+    dataset = KittiDataset(root=dir, set='train')
     data_loader = data.DataLoader(dataset, batch_size, shuffle=True)
 
     model = ComplexYOLO()
@@ -35,18 +34,18 @@ if __name__ == '__main__':
     # define loss function
     region_loss = RegionLoss(num_classes=8, num_anchors=5)
 
-
     for epoch in range(number_epochs):
 
-       for batch_idx, (rgb_map, target) in enumerate(data_loader):
-              optimizer.zero_grad()
+        for batch_idx, (rgb_map, target) in enumerate(data_loader):
+            optimizer.zero_grad()
 
-              rgb_map = rgb_map.view(rgb_map.data.size(0),rgb_map.data.size(3),rgb_map.data.size(1),rgb_map.data.size(2))
-              output = model(rgb_map.float().cuda())
+            rgb_map = rgb_map.view(rgb_map.data.size(0), rgb_map.data.size(3), rgb_map.data.size(1),
+                                   rgb_map.data.size(2))
+            output = model(rgb_map.float().cuda())
 
-              loss = region_loss(output,target)
-              loss.backward()
-              optimizer.step()
+            loss = region_loss(output, target)
+            loss.backward()
+            optimizer.step()
 
-       if (epoch % 10 == 0):
-           torch.save(model, "ComplexYOLO_epoch"+str(epoch))
+        if (epoch % 10 == 0):
+            torch.save(model, "ComplexYOLO_epoch" + str(epoch))

@@ -6,21 +6,20 @@ from torch.autograd import Variable
 
 def reorg(x):
     stride = 2
-    assert(x.data.dim() == 4)
+    assert (x.data.dim() == 4)
     B = x.data.size(0)
     C = x.data.size(1)
     H = x.data.size(2)
     W = x.data.size(3)
-    assert(H % stride == 0)
-    assert(W % stride == 0)
+    assert (H % stride == 0)
+    assert (W % stride == 0)
     ws = stride
     hs = stride
-    x = x.view(B, C, int(H/hs), hs, int(W/ws), ws).transpose(3,4).contiguous()
-    x = x.view(B, C, int(H/hs*W/ws), hs*ws).transpose(2,3).contiguous()
-    x = x.view(B, C, hs*ws, int(H/hs), int(W/ws)).transpose(1,2).contiguous()
-    x = x.view(B, hs*ws*C, int(H/hs), int(W/ws))
+    x = x.view(B, C, int(H / hs), hs, int(W / ws), ws).transpose(3, 4).contiguous()
+    x = x.view(B, C, int(H / hs * W / ws), hs * ws).transpose(2, 3).contiguous()
+    x = x.view(B, C, hs * ws, int(H / hs), int(W / ws)).transpose(1, 2).contiguous()
+    x = x.view(B, hs * ws * C, int(H / hs), int(W / ws))
     return x
-
 
 
 class ComplexYOLO(nn.Module):
@@ -75,10 +74,10 @@ class ComplexYOLO(nn.Module):
 
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self,x):
+    def forward(self, x):
         x = self.relu(self.bn_1(self.conv_1(x)))
         x = self.pool_1(x)
-        
+
         x = self.relu(self.bn_2(self.conv_2(x)))
         x = self.pool_2(x)
 
@@ -91,11 +90,11 @@ class ComplexYOLO(nn.Module):
         x = self.relu(self.bn_7(self.conv_7(x)))
         x = self.relu(self.bn_8(self.conv_8(x)))
         x = self.pool_4(x)
-        
+
         x = self.relu(self.bn_9(self.conv_9(x)))
-        route_1 = x            # 12 layer
+        route_1 = x  # 12 layer
         reorg_result = reorg(route_1)
-        
+
         x = self.relu(self.bn_10(self.conv_10(x)))
         x = self.relu(self.bn_11(self.conv_11(x)))
         x = self.pool_5(x)
@@ -106,7 +105,7 @@ class ComplexYOLO(nn.Module):
         x = self.relu(self.bn_15(self.conv_15(x)))
         x = self.relu(self.bn_16(self.conv_16(x)))
 
-        x = torch.cat((reorg_result,x),1)
+        x = torch.cat((reorg_result, x), 1)
         x = self.relu(self.bn_17(self.conv_17(x)))
         x = self.conv_18(x)
 

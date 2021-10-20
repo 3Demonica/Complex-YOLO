@@ -10,15 +10,15 @@ import numpy as np
 from utils import *
 
 
-def build_targets(pred_boxes,pred_conf, pred_cls, target, anchors, num_anchors, num_classes, nH, nW, ignore_thres):
+def build_targets(pred_boxes, pred_conf, pred_cls, target, anchors, num_anchors, num_classes, nH, nW, ignore_thres):
     nB = target.size(0)
     nA = num_anchors   #5
     nC = num_classes   #8
     mask = torch.zeros(nB,nA,nH,nW)
     conf_mask  = torch.ones(nB, nA, nH, nW)
     tx         = torch.zeros(nB, nA, nH, nW)
-    ty         = torch.zeros(nB, nA, nH, nW) 
-    tw         = torch.zeros(nB, nA, nH, nW) 
+    ty         = torch.zeros(nB, nA, nH, nW)
+    tw         = torch.zeros(nB, nA, nH, nW)
     tl         = torch.zeros(nB, nA, nH, nW)
     tim        = torch.zeros(nB, nA, nH, nW)
     tre        = torch.zeros(nB, nA, nH, nW)
@@ -38,8 +38,8 @@ def build_targets(pred_boxes,pred_conf, pred_cls, target, anchors, num_anchors, 
             gy = target[b, t, 2] * nH
             gw = target[b, t, 3] * nW
             gl = target[b, t, 4] * nH
-            #gim = target[b][t][5]
-            #gre = target[b][t][6]
+            # gim = target[b][t][5]
+            # gre = target[b][t][6]
 
             # Get grid box indices
             gi = int(gx)
@@ -89,7 +89,7 @@ class RegionLoss(nn.Module):
         self.anchors = anchors
         self.num_anchors = num_anchors
         self.num_classes = num_classes
-        self.bbox_attrs = 7+num_classes
+        self.bbox_attrs = 7 + num_classes
         self.ignore_thres = 0.6
         self.lambda_coord = 1
 
@@ -97,24 +97,22 @@ class RegionLoss(nn.Module):
         self.bce_loss = nn.BCELoss(size_average=True)  # Confidence loss
         self.ce_loss = nn.CrossEntropyLoss()  # Class loss
 
-
-
     def forward(self, x, targets):
-        #x : batch_size*num_anchorsx(6+1+num_classes)*H*W    [12,75,16,32]
-        #targets :   targets define in utils.py  get_target function   [12,50,7]
+        # x : batch_size*num_anchorsx(6+1+num_classes)*H*W    [12,75,16,32]
+        # targets :   targets define in utils.py  get_target function   [12,50,7]
 
-        nA = self.num_anchors     # num_anchors = 5
+        nA = self.num_anchors  # num_anchors = 5
         nB = x.data.size(0)  # batch_size
         nH = x.data.size(2)  # nH  16
         nW = x.data.size(3)  # nW  32
-
 
         # Tensors for cuda support
         FloatTensor = torch.cuda.FloatTensor if x.is_cuda else torch.FloatTensor
         LongTensor = torch.cuda.LongTensor if x.is_cuda else torch.LongTensor
         BoolTensor = torch.cuda.BoolTensor if x.is_cuda else torch.BoolTensor
 
-        prediction = x.view(nB, nA, self.bbox_attrs, nH, nW).permute(0, 1, 3, 4, 2).contiguous()  # prediction [12,5,16,32,15]
+        prediction = x.view(nB, nA, self.bbox_attrs, nH, nW).permute(0, 1, 3, 4,
+                                                                     2).contiguous()  # prediction [12,5,16,32,15]
 
         # Get outputs
         x = torch.sigmoid(prediction[..., 0])  # Center x
@@ -127,7 +125,7 @@ class RegionLoss(nn.Module):
         # Calculate offsets for each grid
         grid_x = torch.arange(nW).repeat(nH, 1).view([1, 1, nH, nW]).type(FloatTensor)
         grid_y = torch.arange(nH).repeat(nW, 1).t().view([1, 1, nH, nW]).type(FloatTensor)
-        scaled_anchors = FloatTensor([(a_w , a_h ) for a_w, a_h in self.anchors])
+        scaled_anchors = FloatTensor([(a_w, a_h) for a_w, a_h in self.anchors])
         anchor_w = scaled_anchors[:, 0:1].view((1, nA, 1, 1))
         anchor_h = scaled_anchors[:, 1:2].view((1, nA, 1, 1))
 
@@ -137,8 +135,6 @@ class RegionLoss(nn.Module):
         pred_boxes[..., 1] = y.data + grid_y
         pred_boxes[..., 2] = torch.exp(w.data) * anchor_w
         pred_boxes[..., 3] = torch.exp(h.data) * anchor_h
-
-
 
         if x.is_cuda:
             self.mse_loss = self.mse_loss.cuda()
@@ -190,7 +186,7 @@ class RegionLoss(nn.Module):
         loss = loss_x + loss_y + loss_w + loss_h + loss_conf + loss_cls
 
         print('nGT %d, recall %f, precision %f, proposals %d, loss: x %f, y %f, w %f, h %f, conf %f, cls %f, total %f' % \
-                 (nGT, recall,  precision,  nProposals, loss_x.data, loss_y.data, loss_w.data, loss_h.data, loss_conf.data, loss_cls.data,loss.data))
+              (nGT, recall, precision, nProposals, loss_x.data, loss_y.data, loss_w.data, loss_h.data, loss_conf.data,
+               loss_cls.data, loss.data))
 
         return loss
-
