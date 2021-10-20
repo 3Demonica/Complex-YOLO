@@ -12,7 +12,7 @@ from utils import *
 
 class KittiDataset(torch.utils.data.Dataset):
 
-    def __init__(self, root='/home/yuliu/KITTI',set='train',type='velodyne_train'):
+    def __init__(self, root, set='train',type='velodyne_train'):
         self.type = type
         self.root = root
         self.data_path = os.path.join(root, 'training')
@@ -21,9 +21,18 @@ class KittiDataset(torch.utils.data.Dataset):
         self.calib_path = os.path.join(self.data_path, "calib/")
         self.label_path = os.path.join(self.data_path, "label_2/")
 
-        with open(os.path.join(self.data_path, '%s.txt' % set)) as f:
-            self.file_list = f.read().splitlines()
+        train_file = os.path.join(self.root, '%s.txt' % set)
 
+        # make the train.txt, if not already there
+        if not(os.path.isfile(train_file)):
+            file = open(train_file, "w")
+            for i in range(6000):
+                file_i = str(i).zfill(6)
+                file.write(file_i + "\n")
+            file.close()
+
+        with open(train_file) as f:
+            self.file_list = f.read().splitlines()
 
     def __getitem__(self, i):
 
@@ -57,7 +66,6 @@ class KittiDataset(torch.utils.data.Dataset):
 
         else:
             raise ValueError('the type invalid')
-
 
     def __len__(self):
         return len(self.file_list)
