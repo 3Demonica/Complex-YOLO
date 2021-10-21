@@ -22,8 +22,8 @@ def build_targets(pred_boxes, pred_conf, pred_cls, target, anchors, num_anchors,
     tl         = torch.zeros(nB, nA, nH, nW)
     tim        = torch.zeros(nB, nA, nH, nW)
     tre        = torch.zeros(nB, nA, nH, nW)
-    tconf      = torch.BoolTensor(nB, nA, nH, nW).fill_(0)
-    tcls       = torch.BoolTensor(nB, nA, nH, nW , nC).fill_(0)
+    tconf      = torch.ByteTensor(nB, nA, nH, nW).fill_(0)
+    tcls       = torch.ByteTensor(nB, nA, nH, nW , nC).fill_(0)
 
     nGT = 0
     nCorrect = 0
@@ -109,7 +109,7 @@ class RegionLoss(nn.Module):
         # Tensors for cuda support
         FloatTensor = torch.cuda.FloatTensor if x.is_cuda else torch.FloatTensor
         LongTensor = torch.cuda.LongTensor if x.is_cuda else torch.LongTensor
-        BoolTensor = torch.cuda.BoolTensor if x.is_cuda else torch.BoolTensor
+        ByteTensor = torch.cuda.ByteTensor if x.is_cuda else torch.BoolTensor
 
         prediction = x.view(nB, nA, self.bbox_attrs, nH, nW).permute(0, 1, 3, 4,
                                                                      2).contiguous()  # prediction [12,5,16,32,15]
@@ -159,8 +159,8 @@ class RegionLoss(nn.Module):
         precision = float(nCorrect / nProposals)
 
         # Handle masks
-        mask = Variable(mask.type(BoolTensor))
-        conf_mask = Variable(conf_mask.type(BoolTensor))
+        mask = Variable(mask.type(ByteTensor))
+        conf_mask = Variable(conf_mask.type(ByteTensor))
 
         # Handle target variables
         tx = Variable(tx.type(FloatTensor), requires_grad=False)
